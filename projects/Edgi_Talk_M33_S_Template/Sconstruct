@@ -11,6 +11,7 @@ import uuid
 # Project paths
 PROJECT_ROOT = Dir('.').abspath
 SDK_ROOT = os.path.normpath(os.path.join(PROJECT_ROOT, '..', '..'))
+BUILD_DIR = 'build'
 
 # =============================================================================
 # Toolchain configuration
@@ -145,21 +146,42 @@ CPPDEFINES = [
 # =============================================================================
 # Library path detection (support both local and external libraries)
 # =============================================================================
+def _posix(path):
+    return path.replace('\\', '/')
+
 # Check if libraries exist locally or need to use external path
-if os.path.exists(os.path.join(PROJECT_ROOT, 'libraries')):
-    LIBRARIES_PATH = PROJECT_ROOT + '/libraries'
-    LIBRARIES_PREFIX = ''
+local_libraries_dir = os.path.join(PROJECT_ROOT, 'libraries')
+if os.path.exists(local_libraries_dir):
+    libraries_src = PROJECT_ROOT + '/libraries'
+    libraries_variant = os.path.join(BUILD_DIR, 'libraries_local')
 else:
-    LIBRARIES_PATH = SDK_ROOT + '/libraries'
-    LIBRARIES_PREFIX = '../../libraries/'
+    libraries_src = os.path.relpath(os.path.join(SDK_ROOT, 'libraries'), PROJECT_ROOT)
+    libraries_variant = os.path.join(BUILD_DIR, 'libraries_ext')
+libraries_src_abs = os.path.normpath(os.path.join(PROJECT_ROOT, libraries_src))
+libraries_variant_abs = os.path.normpath(os.path.join(PROJECT_ROOT, libraries_variant))
+libraries_real_path = libraries_src_abs
+libraries_variant_rel = libraries_variant
+VariantDir(libraries_variant, libraries_src, duplicate=0)
+libraries_real_path = _posix(libraries_real_path)
+libraries_variant = _posix(libraries_variant_rel)
+LIBRARIES_PREFIX = libraries_variant + '/'
 
 # Check if libs exist locally or need to use external path
-if os.path.exists(os.path.join(PROJECT_ROOT, 'libs')):
-    LIBS_PATH = PROJECT_ROOT + '/libs'
-    LIBS_PREFIX = ''
+local_libs_dir = os.path.join(PROJECT_ROOT, 'libs')
+if os.path.exists(local_libs_dir):
+    libs_src = 'libs'
+    libs_variant = os.path.join(BUILD_DIR, 'libs_local')
 else:
-    LIBS_PATH = os.path.normpath(os.path.join(PROJECT_ROOT, '..', 'libs'))
-    LIBS_PREFIX = '../libs/'
+    libs_src = os.path.relpath(os.path.join(PROJECT_ROOT, '..', 'libs'), PROJECT_ROOT)
+    libs_variant = os.path.join(BUILD_DIR, 'libs_ext')
+libs_src_abs = os.path.normpath(os.path.join(PROJECT_ROOT, libs_src))
+libs_variant_abs = os.path.normpath(os.path.join(PROJECT_ROOT, libs_variant))
+libs_real_path = libs_src_abs
+libs_variant_rel = libs_variant
+VariantDir(libs_variant, libs_src, duplicate=0)
+libs_real_path = _posix(libs_real_path)
+libs_variant = _posix(libs_variant_rel)
+LIBS_PREFIX = libs_variant + '/'
 
 # =============================================================================
 # Include paths
@@ -167,33 +189,33 @@ else:
 CPPPATH = [
     PROJECT_ROOT + '/applications',
     PROJECT_ROOT + '/config',
-    LIBRARIES_PATH + '/components/retarget-io/include',
-    LIBRARIES_PATH + '/components/mtb-ipc/include',
-    LIBRARIES_PATH + '/components/mtb-device-support-pse8xxgp/pdl/drivers/third_party/COMPONENT_GFXSS/vsi/gcnano',
-    LIBRARIES_PATH + '/components/mtb-device-support-pse8xxgp/pdl/drivers/third_party/COMPONENT_GFXSS/vsi/dcnano8000',
-    LIBRARIES_PATH + '/components/mtb-device-support-pse8xxgp/pdl/drivers/third_party/COMPONENT_GFXSS',
-    LIBRARIES_PATH + '/components/mtb-srf/include/COMPONENT_NON_SECURE_DEVICE/COMPONENT_MW_MTB_IPC',
-    LIBRARIES_PATH + '/components/mtb-srf/include/COMPONENT_NON_SECURE_DEVICE',
-    LIBRARIES_PATH + '/components/mtb-srf/include',
-    LIBRARIES_PATH + '/components/mtb-device-support-pse8xxgp/nnkernel/COMPONENT_CM33/include',
-    LIBRARIES_PATH + '/components/async-transfer/include',
-    LIBRARIES_PATH + '/components/Infineon_cmsis-latest/Core/Include',
-    LIBRARIES_PATH + '/components/Infineon_cmsis-latest/Core/Include/m-profile',
-    LIBRARIES_PATH + '/components/Infineon_core-lib-latest/include',
-    LIBRARIES_PATH + '/components/Infineon_retarget-io-latest',
-    LIBRARIES_PATH + '/components/mtb-device-support-pse8xxgp/device-utils/syspm/include',
-    LIBRARIES_PATH + '/components/mtb-device-support-pse8xxgp/hal/include',
-    LIBRARIES_PATH + '/components/mtb-device-support-pse8xxgp/pdl/devices/include',
-    LIBRARIES_PATH + '/components/mtb-device-support-pse8xxgp/pdl/devices/include/ip',
-    LIBRARIES_PATH + '/components/mtb-device-support-pse8xxgp/pdl/drivers/include',
-    LIBRARIES_PATH + '/components/mtb-device-support-pse8xxgp/pdl/drivers/third_party/ethernet/include',
-    LIBRARIES_PATH + '/components/serial-memory/include',
-    LIBRARIES_PATH + '/components/se-rt-services-utils',
-    LIBS_PATH + '/TARGET_APP_KIT_PSE84_EVAL_EPC2',
-    LIBS_PATH + '/TARGET_APP_KIT_PSE84_EVAL_EPC2/bluetooth',
-    LIBS_PATH + '/TARGET_APP_KIT_PSE84_EVAL_EPC2/config',
-    LIBS_PATH + '/TARGET_APP_KIT_PSE84_EVAL_EPC2/config/GeneratedSource',
-    LIBS_PATH + '/TARGET_APP_KIT_PSE84_EVAL_EPC2/COMPONENT_CM33/COMPONENT_SECURE_DEVICE',
+    libraries_real_path + '/components/retarget-io/include',
+    libraries_real_path + '/components/mtb-ipc/include',
+    libraries_real_path + '/components/mtb-device-support-pse8xxgp/pdl/drivers/third_party/COMPONENT_GFXSS/vsi/gcnano',
+    libraries_real_path + '/components/mtb-device-support-pse8xxgp/pdl/drivers/third_party/COMPONENT_GFXSS/vsi/dcnano8000',
+    libraries_real_path + '/components/mtb-device-support-pse8xxgp/pdl/drivers/third_party/COMPONENT_GFXSS',
+    libraries_real_path + '/components/mtb-srf/include/COMPONENT_NON_SECURE_DEVICE/COMPONENT_MW_MTB_IPC',
+    libraries_real_path + '/components/mtb-srf/include/COMPONENT_NON_SECURE_DEVICE',
+    libraries_real_path + '/components/mtb-srf/include',
+    libraries_real_path + '/components/mtb-device-support-pse8xxgp/nnkernel/COMPONENT_CM33/include',
+    libraries_real_path + '/components/async-transfer/include',
+    libraries_real_path + '/components/Infineon_cmsis-latest/Core/Include',
+    libraries_real_path + '/components/Infineon_cmsis-latest/Core/Include/m-profile',
+    libraries_real_path + '/components/Infineon_core-lib-latest/include',
+    libraries_real_path + '/components/Infineon_retarget-io-latest',
+    libraries_real_path + '/components/mtb-device-support-pse8xxgp/device-utils/syspm/include',
+    libraries_real_path + '/components/mtb-device-support-pse8xxgp/hal/include',
+    libraries_real_path + '/components/mtb-device-support-pse8xxgp/pdl/devices/include',
+    libraries_real_path + '/components/mtb-device-support-pse8xxgp/pdl/devices/include/ip',
+    libraries_real_path + '/components/mtb-device-support-pse8xxgp/pdl/drivers/include',
+    libraries_real_path + '/components/mtb-device-support-pse8xxgp/pdl/drivers/third_party/ethernet/include',
+    libraries_real_path + '/components/serial-memory/include',
+    libraries_real_path + '/components/se-rt-services-utils',
+    libs_real_path + '/TARGET_APP_KIT_PSE84_EVAL_EPC2',
+    libs_real_path + '/TARGET_APP_KIT_PSE84_EVAL_EPC2/bluetooth',
+    libs_real_path + '/TARGET_APP_KIT_PSE84_EVAL_EPC2/config',
+    libs_real_path + '/TARGET_APP_KIT_PSE84_EVAL_EPC2/config/GeneratedSource',
+    libs_real_path + '/TARGET_APP_KIT_PSE84_EVAL_EPC2/COMPONENT_CM33/COMPONENT_SECURE_DEVICE',
 ]
 
 # =============================================================================
@@ -351,7 +373,6 @@ static_obj.add_action('.S', as_builder.action)
 # Build target
 # =============================================================================
 # Create build directory
-BUILD_DIR = 'build'
 VariantDir(BUILD_DIR, '.', duplicate=0)
 
 # Separate local sources and external sources
@@ -361,15 +382,38 @@ external_src = []
 
 for s in SRC:
     src_str = str(s)
-    # Check if it's an external path (either relative ../ or absolute path outside project)
-    if src_str.startswith('../') or src_str.startswith('..\\'):
+    src_abs = os.path.abspath(src_str)
+    try:
+        rel_to_proj = os.path.relpath(src_abs, PROJECT_ROOT).replace('\\', '/')
+    except ValueError:
         external_src.append(src_str)
-    elif os.path.isabs(src_str) and not src_str.startswith(os.path.abspath('.')):
-        # Absolute path outside project - use as-is
+        continue
+
+    src_abs_norm = os.path.normcase(src_abs)
+    libs_src_norm = os.path.normcase(libs_src_abs)
+    libraries_src_norm = os.path.normcase(libraries_src_abs)
+
+    if src_abs_norm.startswith(libs_src_norm):
+        rel_in_libs = os.path.relpath(src_abs, libs_src_abs).replace('\\', '/')
+        local_src.append(LIBS_PREFIX + rel_in_libs)
+        continue
+
+    if src_abs_norm.startswith(libraries_src_norm):
+        rel_in_libraries = os.path.relpath(src_abs, libraries_src_abs).replace('\\', '/')
+        local_src.append(LIBRARIES_PREFIX + rel_in_libraries)
+        continue
+
+    build_prefix = BUILD_DIR + '/'
+
+    # Path escapes project root → treat as external
+    if rel_to_proj.startswith('../'):
         external_src.append(src_str)
+    elif rel_to_proj.startswith(build_prefix):
+        # Already under build directory
+        local_src.append(rel_to_proj)
     else:
-        # Local source - add build dir prefix
-        local_src.append(BUILD_DIR + '/' + src_str)
+        # Located inside project tree: mirror into build directory
+        local_src.append(build_prefix + rel_to_proj)
 
 # Combine: local sources (with build dir prefix) + external sources (as-is)
 build_src = local_src + external_src
